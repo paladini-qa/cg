@@ -1,0 +1,22 @@
+//---------------------------------------------------------------------------
+
+#ifndef uPoligonoH
+#define uPoligonoH
+#include <vector>
+#include "uPonto.h"
+#include <Vcl.Controls.hpp>
+#include <Vcl.ExtCtrls.hpp>
+//---------------------------------------------------------------------------
+
+class Poligono{
+	public:
+	   std::vector <Ponto> pontos;
+	   int id;
+	   char tipo;
+
+	   void mostra(TListBox *listBox);
+	   void desenha(TCanvas *canvas, Janela vp, Janela mundo);
+
+
+};
+#endif

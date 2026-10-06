@@ -1,0 +1,18 @@
+//---------------------------------------------------------------------------
+
+#ifndef uPontoH
+#define uPontoH
+//---------------------------------------------------------------------------
+
+class Ponto {
+	public:
+		double x;
+		double y;
+
+		Ponto();
+		Ponto(double nx, double ny);
+		int xW2Vp(Janela vp, Janela mundo);
+        int yW2Vp(Janela vp, Janela mundo);
+};
+
+#endif

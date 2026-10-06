@@ -1,0 +1,14 @@
+//---------------------------------------------------------------------------
+
+#ifndef uPoligonoH
+#define uPoligonoH
+#include <vector>
+#include "uPonto.h"
+//---------------------------------------------------------------------------
+
+class Poligono{
+	public:
+	   vector <Ponto> pontos;
+
+}
+#endif

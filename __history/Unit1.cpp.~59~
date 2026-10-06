@@ -1,0 +1,242 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "Unit1.h"
+#include "uJanela.h"
+#include "uPonto.h"
+#include "uPoligono.h"
+#include "uDisplay.h"
+#include <stack>
+
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TForm1 *Form1;
+Janela vp(0,0,500,500), mundo(-250, -250, 250, 250);
+Ponto aux;
+Poligono pol;
+Display display;
+bool inicio = false;
+int contId = 0;
+int tipoReta = 0; // 0=LineTo, 1=DDA, 2=Bresenham
+std::stack<Janela> historicoMundo; // histórico para Zoom Out
+
+// Recria os eixos X e Y de acordo com o mundo atual
+void recriaEixos() {
+	// Remove eixos antigos
+	std::vector<Poligono> outros;
+	for (int i = 0; i < (int)display.poligonos.size(); i++)
+		if (display.poligonos[i].tipo != 'E')
+			outros.push_back(display.poligonos[i]);
+	display.poligonos = outros;
+
+	Poligono eixo;
+
+	// Eixo vertical (x = 0, percorre de yMin a yMax do mundo)
+	eixo.id = -1;
+	eixo.tipo = 'E';
+	eixo.pontos.push_back(Ponto(0, mundo.yMin));
+	eixo.pontos.push_back(Ponto(0, mundo.yMax));
+	display.poligonos.insert(display.poligonos.begin(), eixo);
+	eixo.pontos.clear();
+
+	// Eixo horizontal (y = 0, percorre de xMin a xMax do mundo)
+	eixo.id = -2;
+	eixo.tipo = 'E';
+	eixo.pontos.push_back(Ponto(mundo.xMin, 0));
+	eixo.pontos.push_back(Ponto(mundo.xMax, 0));
+	display.poligonos.insert(display.poligonos.begin(), eixo);
+}
+
+double xVp2Mundo(int xVp, Janela vp, Janela mundo){
+  return (xVp - vp.xMin) / (vp.xMax - vp.xMin) * (mundo.xMax - mundo.xMin) + mundo.xMin;
+}
+
+double yVp2Mundo(int yVp, Janela vp, Janela mundo){
+  return (1 - (yVp - vp.yMin) / (vp.yMax - vp.yMin)) * (mundo.yMax - mundo.yMin) + mundo.yMin;
+}
+
+//---------------------------------------------------------------------------
+__fastcall TForm1::TForm1(TComponent* Owner)
+	: TForm(Owner)
+{
+	Image1->Canvas->Brush->Color = clWhite;
+	Image1->Canvas->FillRect(Rect(0,0,500,500));
+
+	Image1->Canvas->Pen->Color = clBlack;
+	Image1->Canvas->Pen->Width = 1;
+
+	// Cria os eixos e desenha
+	recriaEixos();
+	display.desenha(Image1->Canvas, vp, mundo, tipoReta);
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Image1MouseMove(TObject *Sender, TShiftState Shift, int X,
+		  int Y)
+{
+	 double xMundo, yMundo;
+
+	 xMundo =  xVp2Mundo(X, vp, mundo);
+	 yMundo =  yVp2Mundo(Y, vp, mundo);
+
+	  lbvp->Caption = "(" + IntToStr(X) + "," + IntToStr(Y) + ")";
+	  lbmundo->Caption = "(" + FloatToStr(xMundo) + "," + FloatToStr(yMundo) + ")";
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Button1Click(TObject *Sender)
+{
+	inicio = true;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Image1MouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y)
+{
+	if (inicio) {
+		if (Button == mbLeft) {
+			aux.x = xVp2Mundo(X, vp, mundo);
+			aux.y = yVp2Mundo(Y, vp, mundo);
+			pol.pontos.push_back(aux);
+			pol.desenha(Image1->Canvas, vp, mundo, tipoReta);
+			pol.mostra(ListBox1);
+		}
+		else if (Button == mbRight) {
+			inicio = false;
+			pol.id = contId++;
+			pol.tipo = 'N';
+			display.poligonos.push_back(pol);
+			pol.pontos.clear();
+
+			display.desenha(Image1->Canvas, vp, mundo, tipoReta);
+			display.mostra(lbPoligonos);
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::lbPoligonosClick(TObject *Sender)
+{
+   if (lbPoligonos->ItemIndex != -1) {
+	  display.poligonos[lbPoligonos->ItemIndex].
+	     mostra(ListBox1);
+   }
+}
+//---------------------------------------------------------------------------
+
+
+
+
+void __fastcall TForm1::Button2Click(TObject *Sender)
+{
+	// Salva o estado atual antes de aplicar o zoom in
+	historicoMundo.push(mundo);
+
+	mundo.xMin = StrToFloat(edXmin->Text);
+	mundo.yMin = StrToFloat(edYmin->Text);
+	mundo.xMax = StrToFloat(edXmax->Text);
+	mundo.yMax = StrToFloat(edYmax->Text);
+	// Recria eixos para cobrir o novo mundo
+	recriaEixos();
+	display.desenha(Image1->Canvas, vp, mundo, tipoReta);
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::RadioGroup1Click(TObject *Sender)
+{
+	tipoReta = RadioGroup1->ItemIndex;
+	display.desenha(Image1->Canvas, vp, mundo, tipoReta);
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Button3Click(TObject *Sender)
+{
+	// Remove todos os polígonos exceto os eixos (tipo 'E')
+	std::vector<Poligono> eixos;
+	for (int i = 0; i < (int)display.poligonos.size(); i++) {
+		if (display.poligonos[i].tipo == 'E')
+			eixos.push_back(display.poligonos[i]);
+	}
+	display.poligonos = eixos;
+
+	// Reseta o polígono em construção e o estado
+	pol.pontos.clear();
+	inicio = false;
+
+	// Limpa as ListBoxes
+	ListBox1->Items->Clear();
+	lbPoligonos->Items->Clear();
+
+	// Redesenha apenas os eixos
+	display.desenha(Image1->Canvas, vp, mundo, tipoReta);
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::Button4Click(TObject *Sender)
+{
+	// Restaura o mundo anterior ao último Zoom In
+	if (!historicoMundo.empty()) {
+		mundo = historicoMundo.top();
+		historicoMundo.pop();
+
+		// Atualiza os campos de edição com os valores restaurados
+		edXmin->Text = FloatToStr(mundo.xMin);
+		edXmax->Text = FloatToStr(mundo.xMax);
+		edYmin->Text = FloatToStr(mundo.yMin);
+		edYmax->Text = FloatToStr(mundo.yMax);
+
+		// Recria eixos e redesenha
+		recriaEixos();
+		display.desenha(Image1->Canvas, vp, mundo, tipoReta);
+	}
+}
+//---------------------------------------------------------------------------
+
+
+
+void __fastcall TForm1::Edit2Change(TObject *Sender)
+{
+	// nada – valor lido no Button5Click
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Edit1Change(TObject *Sender)
+{
+	// nada – valor lido no Button5Click
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::Button5Click(TObject *Sender)
+{
+	// Lê os valores de translação
+	double dx = StrToFloatDef(Edit1->Text, 0.0);
+	double dy = StrToFloatDef(Edit2->Text, 0.0);
+
+	// Verifica se há um polígono selecionado na listbox
+	int idx = lbPoligonos->ItemIndex;
+
+	if (idx != -1) {
+		// Aplica translação apenas no polígono selecionado (ignora eixos)
+		if (display.poligonos[idx].tipo != 'E') {
+			display.poligonos[idx].translada(dx, dy);
+		}
+	} else {
+		// Aplica em todos os polígonos (exceto eixos)
+		for (int i = 0; i < (int)display.poligonos.size(); i++) {
+			if (display.poligonos[i].tipo != 'E') {
+				display.poligonos[i].translada(dx, dy);
+			}
+		}
+	}
+
+	// Redesenha e atualiza a listbox de pontos
+	display.desenha(Image1->Canvas, vp, mundo, tipoReta);
+	if (idx != -1) {
+		display.poligonos[idx].mostra(ListBox1);
+	}
+}
+//---------------------------------------------------------------------------
+

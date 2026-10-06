@@ -1,0 +1,17 @@
+//---------------------------------------------------------------------------
+
+#ifndef uPoligonoH
+#define uPoligonoH
+#include <vector>
+#include "uPonto.h"
+#include <Vcl.Controls.hpp>
+//---------------------------------------------------------------------------
+
+class Poligono{
+	public:
+	   std::vector <Ponto> pontos;
+
+	   void mostra(TListBox)
+
+};
+#endif

@@ -1,0 +1,17 @@
+//---------------------------------------------------------------------------
+
+#pragma hdrstop
+
+#include "uPoligono.h"
+#include <Vcl.Controls.hpp>
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+
+void Poligono::mostra(TListBox *listBox){
+	listBox->Items->Clear();
+	for (int i = 0; i < pontos.size(); i++) {
+        listBox->Items->Add(pontos[i].toString());
+	}
+}
+
+

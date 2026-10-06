@@ -1,0 +1,234 @@
+//---------------------------------------------------------------------------
+
+#pragma hdrstop
+
+#include "funcoes.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+
+// ---------------------------------------------------------------------------
+// Transladar
+// ---------------------------------------------------------------------------
+void aplicarTransladar(Display &display, int idx, double dx, double dy)
+{
+    if (idx != -1) {
+        if (display.poligonos[idx].tipo != 'E')
+            display.poligonos[idx].translada(dx, dy);
+    } else {
+        for (int i = 0; i < (int)display.poligonos.size(); i++)
+            if (display.poligonos[i].tipo != 'E')
+                display.poligonos[i].translada(dx, dy);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Rotacionar (origem)
+// ---------------------------------------------------------------------------
+void aplicarRotacionar(Display &display, int idx, double angulo)
+{
+    if (idx != -1) {
+        if (display.poligonos[idx].tipo != 'E')
+            display.poligonos[idx].rotaciona(angulo);
+    } else {
+        for (int i = 0; i < (int)display.poligonos.size(); i++)
+            if (display.poligonos[i].tipo != 'E')
+                display.poligonos[i].rotaciona(angulo);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Rotacao Homogenea (ponto arbitrario)
+// ---------------------------------------------------------------------------
+void aplicarRotacaoHomogenea(Display &display, int idx, double angulo, double px, double py)
+{
+    if (idx != -1) {
+        if (display.poligonos[idx].tipo != 'E')
+            display.poligonos[idx].rotacionaHomogenea(angulo, px, py);
+    } else {
+        for (int i = 0; i < (int)display.poligonos.size(); i++)
+            if (display.poligonos[i].tipo != 'E')
+                display.poligonos[i].rotacionaHomogenea(angulo, px, py);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Refletir
+// ---------------------------------------------------------------------------
+void aplicarRefletir(Display &display, int idx, int eixo)
+{
+    if (idx != -1) {
+        if (display.poligonos[idx].tipo != 'E')
+            display.poligonos[idx].reflete(eixo);
+    } else {
+        for (int i = 0; i < (int)display.poligonos.size(); i++)
+            if (display.poligonos[i].tipo != 'E')
+                display.poligonos[i].reflete(eixo);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Desenhar Circunferencia
+// ---------------------------------------------------------------------------
+void aplicarCircunferencia(Display &display, double xc, double yc, double r,
+                            TCanvas *canvas, const Janela &vp, const Janela &mundo,
+                            int tipoReta, bool clipAtivo, TListBox *lbPoligonos)
+{
+    Circunferencia circ(xc, yc, r);
+    display.circunferencias.push_back(circ);
+    display.desenha(canvas, vp, mundo, tipoReta, clipAtivo);
+    display.mostra(lbPoligonos);
+}
+
+// ---------------------------------------------------------------------------
+// Recortar (Cohen-Sutherland)
+// ---------------------------------------------------------------------------
+void aplicarClipping(Display &display, bool &clipAtivo,
+                     double cxMin, double cxMax, double cyMin, double cyMax,
+                     TCanvas *canvas, const Janela &vp, const Janela &mundo,
+                     int tipoReta, TListBox *lbPoligonos)
+{
+    clipAtivo = !clipAtivo;
+    if (clipAtivo)
+        display.janelaCorte = Janela(cxMin, cyMin, cxMax, cyMax);
+
+    display.desenha(canvas, vp, mundo, tipoReta, clipAtivo);
+    display.mostra(lbPoligonos);
+}
+
+// ---------------------------------------------------------------------------
+// Zoom - auxiliar: recria os eixos conforme o mundo atual
+// ---------------------------------------------------------------------------
+void recriaEixos(Display &display, const Janela &mundo)
+{
+    std::vector<Poligono> outros;
+    for (int i = 0; i < (int)display.poligonos.size(); i++)
+        if (display.poligonos[i].tipo != 'E')
+            outros.push_back(display.poligonos[i]);
+    display.poligonos = outros;
+
+    Poligono eixo;
+
+    eixo.id = -1;
+    eixo.tipo = 'E';
+    eixo.pontos.push_back(Ponto(0, mundo.yMin));
+    eixo.pontos.push_back(Ponto(0, mundo.yMax));
+    display.poligonos.insert(display.poligonos.begin(), eixo);
+    eixo.pontos.clear();
+
+    eixo.id = -2;
+    eixo.tipo = 'E';
+    eixo.pontos.push_back(Ponto(mundo.xMin, 0));
+    eixo.pontos.push_back(Ponto(mundo.xMax, 0));
+    display.poligonos.insert(display.poligonos.begin(), eixo);
+}
+
+// ---------------------------------------------------------------------------
+// Zoom In
+// ---------------------------------------------------------------------------
+void aplicarZoomIn(Display &display, Janela &mundo, std::stack<Janela> &historico,
+                   double xMin, double yMin, double xMax, double yMax,
+                   TCanvas *canvas, const Janela &vp, int tipoReta, bool clipAtivo)
+{
+    historico.push(mundo);
+    mundo.xMin = xMin;
+    mundo.yMin = yMin;
+    mundo.xMax = xMax;
+    mundo.yMax = yMax;
+    recriaEixos(display, mundo);
+    display.desenha(canvas, vp, mundo, tipoReta, clipAtivo);
+}
+
+// ---------------------------------------------------------------------------
+// Zoom Out
+// ---------------------------------------------------------------------------
+void aplicarZoomOut(Display &display, Janela &mundo, std::stack<Janela> &historico,
+                    TEdit *edXmin, TEdit *edXmax, TEdit *edYmin, TEdit *edYmax,
+                    TCanvas *canvas, const Janela &vp, int tipoReta, bool clipAtivo)
+{
+    if (!historico.empty()) {
+        mundo = historico.top();
+        historico.pop();
+        edXmin->Text = FloatToStr(mundo.xMin);
+        edXmax->Text = FloatToStr(mundo.xMax);
+        edYmin->Text = FloatToStr(mundo.yMin);
+        edYmax->Text = FloatToStr(mundo.yMax);
+        recriaEixos(display, mundo);
+        display.desenha(canvas, vp, mundo, tipoReta, clipAtivo);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Curvas: Hermite (tipo=8) e Bezier (tipo=9)
+// ---------------------------------------------------------------------------
+bool aplicarCurva(Display &display, int idx, int tipo, int &contId)
+{
+    if (idx == -1 || (int)display.poligonos[idx].pontos.size() < 4)
+        return false;
+
+    Poligono pOrig = display.poligonos[idx];
+    Ponto p1 = pOrig.pontos[0];
+    Ponto p2 = pOrig.pontos[1];
+    Ponto p3 = pOrig.pontos[2];
+    Ponto p4 = pOrig.pontos[3];
+
+    int n = 100;
+    double passo = 1.0 / n;
+
+    double ax, bx, cx, dx;
+    double ay, by, cy, dy;
+
+    if (tipo == 8) {
+        // ---- Hermite ----
+        // Pontos extremos: P1 = p1 (t=0), P4 = p4 (t=1)
+        // Tangentes:       R1 = P2 - P1,  R4 = P4 - P3
+        double R1x = p2.x - p1.x;
+        double R1y = p2.y - p1.y;
+        double R4x = p4.x - p3.x;
+        double R4y = p4.y - p3.y;
+
+        ax = ( 2*p1.x) + (-2*p4.x) + R1x + R4x;
+        bx = (-3*p1.x) + ( 3*p4.x) + (-2*R1x) + (-R4x);
+        cx = R1x;
+        dx = p1.x;
+
+        ay = ( 2*p1.y) + (-2*p4.y) + R1y + R4y;
+        by = (-3*p1.y) + ( 3*p4.y) + (-2*R1y) + (-R4y);
+        cy = R1y;
+        dy = p1.y;
+    } else {
+        // ---- Bezier ----
+        // Pontos extremos: P1 = p1 (t=0), P4 = p4 (t=1)
+        // Coeficientes: Cx = MB * GBx,  Cy = MB * GBy
+        // MB = | -1   3  -3   1 |
+        //      |  3  -6   3   0 |
+        //      | -3   3   0   0 |
+        //      |  1   0   0   0 |
+        ax = (-1*p1.x) + ( 3*p2.x) + (-3*p3.x) + ( 1*p4.x);
+        bx = ( 3*p1.x) + (-6*p2.x) + ( 3*p3.x);
+        cx = (-3*p1.x) + ( 3*p2.x);
+        dx =     p1.x;
+
+        ay = (-1*p1.y) + ( 3*p2.y) + (-3*p3.y) + ( 1*p4.y);
+        by = ( 3*p1.y) + (-6*p2.y) + ( 3*p3.y);
+        cy = (-3*p1.y) + ( 3*p2.y);
+        dy =     p1.y;
+    }
+
+    Poligono curva;
+    curva.id   = contId++;
+    curva.tipo = 'C';
+
+    for (double t = 0; t <= 1.0; t += passo) {
+        double t3 = t * t * t;
+        double t2 = t * t;
+        double t1 = t;
+
+        double x = (ax * t3) + (bx * t2) + (cx * t1) + dx;
+        double y = (ay * t3) + (by * t2) + (cy * t1) + dy;
+
+        curva.pontos.push_back(Ponto(x, y));
+    }
+
+    display.poligonos.push_back(curva);
+    return true;
+}

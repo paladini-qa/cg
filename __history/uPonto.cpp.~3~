@@ -1,0 +1,19 @@
+//---------------------------------------------------------------------------
+
+#pragma hdrstop
+
+#include "uPonto.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+
+Ponto::Ponto(){
+	x = y = 0;
+};
+
+Ponto::Ponto()(double nx, double ny){
+	x = nx;
+	y = ny;
+};
+
+int Ponto::xW2Vp(Janela vp, Janela mundo);
+int Ponto::yW2Vp(Janela vp, Janela mundo);

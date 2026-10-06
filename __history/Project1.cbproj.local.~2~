@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2026/08/24 16:53:34.000.717,=C:\Users\Vitor\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>2026/08/24 16:53:34.000.788,=C:\Users\Vitor\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>2026/08/24 16:53:51.000.270,C:\Users\Vitor\Documents\cg\Unit1.dfm=C:\Users\Vitor\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>2026/08/24 16:53:51.000.270,C:\Users\Vitor\Documents\cg\Unit1.cpp=C:\Users\Vitor\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>2026/08/24 16:53:51.000.270,C:\Users\Vitor\Documents\cg\Unit1.h=C:\Users\Vitor\Documents\Embarcadero\Studio\Projects\Unit1.h</Transaction>
+    <Transaction>2026/08/24 16:53:51.000.281,C:\Users\Vitor\Documents\cg\Project1.cbproj=C:\Users\Vitor\Documents\Embarcadero\Studio\Projects\Project1.cbproj</Transaction>
+    <Transaction>2026/08/24 16:53:51.000.258,C:\Users\Vitor\Documents\cg\Project1PCH1.h=C:\Users\Vitor\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>2026/08/24 16:53:53.000.296,C:\Users\Vitor\Documents\cg\Project1.cbproj=C:\Users\Vitor\Documents\cg\Project1.cbproj</Transaction>
+    <Transaction>2026/08/31 15:58:18.000.533,=C:\Users\Vitor\Documents\cg\Unit2.cpp</Transaction>
+    <Transaction>2026/08/31 16:01:24.000.767,C:\Users\Vitor\Documents\cg\uJanela.cpp=C:\Users\Vitor\Documents\cg\Unit2.cpp</Transaction>
+    <Transaction>2026/08/31 16:01:24.000.767,C:\Users\Vitor\Documents\cg\uJanela.h=C:\Users\Vitor\Documents\cg\Unit2.h</Transaction>
+    <Transaction>2026/08/31 16:12:27.000.350,=C:\Users\Vitor\Documents\cg\Unit2.cpp</Transaction>
+    <Transaction>2026/08/31 16:12:57.000.950,C:\Users\Vitor\Documents\cg\uPonto.h=C:\Users\Vitor\Documents\cg\Unit2.h</Transaction>
+    <Transaction>2026/08/31 16:12:57.000.950,C:\Users\Vitor\Documents\cg\uPonto.cpp=C:\Users\Vitor\Documents\cg\Unit2.cpp</Transaction>
+    <Transaction>2026/08/31 16:46:52.000.170,=C:\Users\Vitor\Documents\cg\Unit2.cpp</Transaction>
+    <Transaction>2026/08/31 16:46:56.000.960,C:\Users\Vitor\Documents\cg\uPoligono.h=C:\Users\Vitor\Documents\cg\Unit2.h</Transaction>
+    <Transaction>2026/08/31 16:46:56.000.960,C:\Users\Vitor\Documents\cg\uPoligono.cpp=C:\Users\Vitor\Documents\cg\Unit2.cpp</Transaction>
+    <Transaction>2026/09/01 16:40:08.000.035,=C:\Users\Vitor\Documents\cg\Unit2.cpp</Transaction>
+    <Transaction>2026/09/01 16:40:17.000.007,C:\Users\Vitor\Documents\cg\Unit2.h=C:\Users\Vitor\Documents\cg\uDisplay.h</Transaction>
+    <Transaction>2026/09/01 16:40:17.000.007,C:\Users\Vitor\Documents\cg\Unit2.cpp=C:\Users\Vitor\Documents\cg\uDisplay.cpp</Transaction>
+  </Transactions>
+	<ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="Project1.cpp"/>
+    <File Path="Project1PCH1.h"/>
+    <File Path="Unit1.cpp"/>
+    <File Path="Unit1.cpp"/>
+    <File Path="Unit1.dfm"/>
+    <File Path="Unit1.h"/>
+    <File Path="uJanela.cpp"/>
+    <File Path="uJanela.cpp"/>
+    <File Path="uJanela.h"/>
+    <File Path="uPonto.cpp"/>
+    <File Path="uPonto.cpp"/>
+    <File Path="uPonto.h"/>
+    <File Path="uPoligono.cpp"/>
+    <File Path="uPoligono.cpp"/>
+    <File Path="uPoligono.h"/>
+    <File Path="uDisplay.cpp"/>
+    <File Path="uDisplay.cpp"/>
+    <File Path="uDisplay.h"/>
+  </ProjectSortOrder>
+</BorlandProject>
