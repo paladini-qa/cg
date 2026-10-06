@@ -74,6 +74,8 @@ __fastcall TForm1::TForm1(TComponent* Owner)
     edXmax->Visible      = false;
     edYmin->Visible      = false;
     edYmax->Visible      = false;
+    LabelZ->Visible      = false;
+    EditZ->Visible       = false;
 
     // Mostra campos de Transladar por padrao
     Label5->Visible = true;
@@ -174,6 +176,7 @@ void __fastcall TForm1::cbOperacaoChange(TObject *Sender)
     Label2->Visible = false; edXmax->Visible = false;
     Label3->Visible = false; edYmin->Visible = false;
     Label4->Visible = false; edYmax->Visible = false;
+    LabelZ->Visible = false; EditZ->Visible = false;
 
     switch (cbOperacao->ItemIndex) {
         case 0: // Transladar
@@ -207,6 +210,21 @@ void __fastcall TForm1::cbOperacaoChange(TObject *Sender)
         case 8: // Hermite
         case 9: // Bezier
         case 10: // Hermite (Forward Differences)
+            break;
+        case 11: // Transladar 3D
+        case 12: { // Escalonar 3D
+            // Escalonar parte de 1 (sem mudanca); transladar parte de 0
+            String padrao = (cbOperacao->ItemIndex == 12) ? "1" : "0";
+            Edit1->Text = padrao; Edit2->Text = padrao; EditZ->Text = padrao;
+            Label5->Visible = true; Edit1->Visible = true;
+            Label6->Visible = true; Edit2->Visible = true;
+            LabelZ->Visible = true; EditZ->Visible = true;
+            break;
+        }
+        case 13: // Rotacionar X
+        case 14: // Rotacionar Y
+        case 15: // Rotacionar Z
+            Graus->Visible = true; Edit3->Visible = true;
             break;
     }
 }
@@ -290,10 +308,63 @@ void __fastcall TForm1::BtnAplicarClick(TObject *Sender)
             }
             break;
         }
+        case 11: // Transladar 3D
+        case 12: // Escalonar 3D
+        case 13: // Rotacionar X
+        case 14: // Rotacionar Y
+        case 15: { // Rotacionar Z
+            if (idx < 0 || idx >= (int)display.poligonos.size() ||
+                display.poligonos[idx].tipo == 'E') {
+                ShowMessage("Selecione um poligono!");
+                return;
+            }
+            Poligono &p = display.poligonos[idx];
+            // campo vazio/invalido: 1 no escalonamento (neutro), 0 na translacao
+            double dflt = (cbOperacao->ItemIndex == 12) ? 1.0 : 0.0;
+            double a = StrToFloatDef(Edit1->Text, dflt);
+            double b = StrToFloatDef(Edit2->Text, dflt);
+            double c = StrToFloatDef(EditZ->Text, dflt);
+            double g = StrToFloatDef(Edit3->Text, 0.0);
+            switch (cbOperacao->ItemIndex) {
+                case 11: p.translada3D(a, b, c); break;
+                case 12: p.escalona(a, b, c);    break;
+                case 13: p.rotacionaX(g);        break;
+                case 14: p.rotacionaY(g);        break;
+                case 15: p.rotacionaZ(g);        break;
+            }
+            break;
+        }
     }
 
     display.desenha(Image1->Canvas, vp, mundo, tipoReta, clipAtivo);
     if (idx != -1)
         display.poligonos[idx].mostra(ListBox1);
+}
+//---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+// Importa um modelo 3D de arquivo texto (fscanf) como novo poligono
+static void importaModelo(TForm1 *form, const char *arquivo)
+{
+    Poligono p;
+    if (!p.carregaArquivo(arquivo)) {
+        ShowMessage(String("Nao foi possivel ler o arquivo: ") + arquivo);
+        return;
+    }
+    p.id   = contId++;
+    p.tipo = 'N';
+    display.poligonos.push_back(p);
+    display.desenha(form->Image1->Canvas, vp, mundo, tipoReta, clipAtivo);
+    display.mostra(form->lbPoligonos);
+}
+
+void __fastcall TForm1::BtnCuboClick(TObject *Sender)
+{
+    importaModelo(this, "modelos\\cubo.txt");
+}
+
+void __fastcall TForm1::BtnPiramideClick(TObject *Sender)
+{
+    importaModelo(this, "modelos\\piramide.txt");
 }
 //---------------------------------------------------------------------------

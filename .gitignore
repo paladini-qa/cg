@@ -1,0 +1,40 @@
+# C++ Builder / RAD Studio
+__history/
+__recovery/
+Win64x/
+Win32/
+Win64/
+Debug/
+Release/
+*.local
+*.identcache
+*.dsk
+*.stat
+*.tds
+*.map
+*.res
+*.#*
+
+# Compilados
+*.obj
+*.o
+*.exe
+*.dll
+*.lib
+*.bpl
+*.pch
+*.ilc
+*.ild
+*.ilf
+*.ils
+*.tvsconfig
+
+# Arquivos de backup
+*.~*
+*.bak
+
+# Sistema / editores
+.vs/
+.vscode/
+Thumbs.db
+.DS_Store

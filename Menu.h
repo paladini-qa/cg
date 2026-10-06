@@ -51,6 +51,10 @@ __published:	// IDE-managed Components
 	TEdit *EditXc;
 	TEdit *EditYc;
 	TEdit *EditR;
+	TLabel *LabelZ;
+	TEdit *EditZ;
+	TButton *BtnCubo;
+	TButton *BtnPiramide;
 
 	void __fastcall Image1MouseMove(TObject *Sender, TShiftState Shift, int X, int Y);
 	void __fastcall Button1Click(TObject *Sender);
@@ -63,6 +67,8 @@ __published:	// IDE-managed Components
 	void __fastcall Edit1Change(TObject *Sender);
 	void __fastcall cbOperacaoChange(TObject *Sender);
 	void __fastcall BtnAplicarClick(TObject *Sender);
+	void __fastcall BtnCuboClick(TObject *Sender);
+	void __fastcall BtnPiramideClick(TObject *Sender);
 
 
 

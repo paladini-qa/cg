@@ -304,7 +304,12 @@ object Form1: TForm1
       'Zoom Out'
       'Desenhar Curva (Hermite)'
       'Desenhar Curva (B'#195#169'zier)'
-      'Curva Fwd Diff (Hermite)')
+      'Curva Fwd Diff (Hermite)'
+      'Transladar 3D'
+      'Escalonar 3D'
+      'Rotacionar X'
+      'Rotacionar Y'
+      'Rotacionar Z')
   end
   object BtnAplicar: TButton
     Left = 272
@@ -377,6 +382,41 @@ object Form1: TForm1
     Height = 23
     TabOrder = 20
     Text = '0'
+  end
+  object LabelZ: TLabel
+    Left = 390
+    Top = 573
+    Width = 7
+    Height = 15
+    Caption = 'Z'
+    Visible = False
+  end
+  object EditZ: TEdit
+    Left = 390
+    Top = 595
+    Width = 80
+    Height = 23
+    TabOrder = 21
+    Text = '0'
+    Visible = False
+  end
+  object BtnCubo: TButton
+    Left = 548
+    Top = 270
+    Width = 121
+    Height = 31
+    Caption = 'Importar Cubo'
+    TabOrder = 22
+    OnClick = BtnCuboClick
+  end
+  object BtnPiramide: TButton
+    Left = 548
+    Top = 320
+    Width = 121
+    Height = 31
+    Caption = 'Importar Piramide'
+    TabOrder = 23
+    OnClick = BtnPiramideClick
   end
   object EditR: TEdit
     Left = 278

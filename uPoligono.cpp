@@ -7,6 +7,7 @@
 #include <Vcl.Controls.hpp>
 #include <Vcl.StdCtrls.hpp>
 #include <cmath>
+#include <cstdio>
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
@@ -244,4 +245,76 @@ Poligono Poligono::clipa(const Janela &clip) {
 		}
 	}
 	return resultado;
+}
+
+// ---------------------------------------------------------------------------
+// Transformacoes 3D (delegam para as matrizes homogeneas da classe Ponto)
+// ---------------------------------------------------------------------------
+void Poligono::translada3D(double dx, double dy, double dz) {
+	for (int i = 0; i < (int)pontos.size(); i++)
+		pontos[i].Translacao(dx, dy, dz);
+}
+
+// Aplica uma transformacao em torno do centroide: T(-c) * Transf * T(c)
+#define TRANSFORMA_NO_CENTROIDE(CHAMADA) \
+	if (pontos.empty()) return; \
+	double cx = 0, cy = 0, cz = 0; \
+	int n = (int)pontos.size(); \
+	for (int i = 0; i < n; i++) { cx += pontos[i].x; cy += pontos[i].y; cz += pontos[i].z; } \
+	cx /= n; cy /= n; cz /= n; \
+	for (int i = 0; i < n; i++) { \
+		pontos[i].Translacao(-cx, -cy, -cz); \
+		pontos[i].CHAMADA; \
+		pontos[i].Translacao(cx, cy, cz); \
+	}
+
+void Poligono::escalona(double sx, double sy, double sz) {
+	TRANSFORMA_NO_CENTROIDE(Escalonamento(sx, sy, sz))
+}
+
+void Poligono::rotacionaX(double angulo) {
+	TRANSFORMA_NO_CENTROIDE(RotacaoX(angulo))
+}
+
+void Poligono::rotacionaY(double angulo) {
+	TRANSFORMA_NO_CENTROIDE(RotacaoY(angulo))
+}
+
+void Poligono::rotacionaZ(double angulo) {
+	TRANSFORMA_NO_CENTROIDE(RotacaoZ(angulo))
+}
+// ---------------------------------------------------------------------------
+// Importa os pontos de um arquivo texto usando fscanf.
+// Formato: primeira linha = quantidade N de pontos; depois N linhas "x y z".
+// Tenta o caminho informado e algumas pastas acima (exe em Win64x\Debug etc.)
+// ---------------------------------------------------------------------------
+bool Poligono::carregaArquivo(const char *caminho) {
+	const char *prefixos[] = { "", "..\\", "..\\..\\", "..\\..\\..\\" };
+	FILE *f = NULL;
+	char nome[512];
+	for (int i = 0; i < 4 && f == NULL; i++) {
+		sprintf(nome, "%s%s", prefixos[i], caminho);
+		f = fopen(nome, "r");
+	}
+	if (f == NULL) return false;
+
+	int qtd = 0;
+	if (fscanf(f, "%d", &qtd) != 1 || qtd <= 0) {
+		fclose(f);
+		return false;
+	}
+
+	std::vector<Ponto> lidos;
+	for (int i = 0; i < qtd; i++) {
+		double x, y, z;
+		if (fscanf(f, "%lf %lf %lf", &x, &y, &z) != 3) {
+			fclose(f);
+			return false;
+		}
+		lidos.push_back(Ponto(x, y, z));
+	}
+	fclose(f);
+
+	pontos = lidos;
+	return true;
 }
