@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{715D408D-A0C5-45E2-9CDE-2DAE3BA1A408}</ProjectGuid>
         <ProjectVersion>20.3</ProjectVersion>
@@ -212,6 +212,10 @@
         <CppCompile Include="uPonto.cpp">
             <DependentOn>uPonto.h</DependentOn>
             <BuildOrder>4</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="uPontoCentral.cpp">
+            <DependentOn>uPontoCentral.h</DependentOn>
+            <BuildOrder>10</BuildOrder>
         </CppCompile>
         <FormResources Include="Menu.dfm"/>
         <BuildConfiguration Include="Base">

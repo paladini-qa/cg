@@ -4,6 +4,7 @@
 #define uPoligonoH
 #include <vector>
 #include "uPonto.h"
+#include "uPontoCentral.h"
 #include <Vcl.Controls.hpp>
 #include <Vcl.ExtCtrls.hpp>
 //---------------------------------------------------------------------------
@@ -20,7 +21,7 @@ class Poligono{
 	   Poligono clipa(const Janela &clip);  // retorna cópia com segmentos recortados
 	   void translada(double dx, double dy);
 	   void rotaciona(double angulo);
-	   void rotacionaHomogenea(double angulo, double px, double py);
+	   void rotacionaHomogenea(double angulo, const PontoCentral &centro);
 	   bool carregaArquivo(const char *caminho); // le N e depois N linhas 'x y z' (fscanf)
 	   void translada3D(double dx, double dy, double dz);
 	   void escalona(double sx, double sy, double sz);   // em relacao ao centroide

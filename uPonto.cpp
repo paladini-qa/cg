@@ -23,7 +23,6 @@ Ponto::Ponto(double nx, double ny, double nz){
 	z = nz;
 };
 
-// Multiplica o vetor linha [x y z 1] pela matriz 4x4 e atualiza x, y, z
 void Ponto::aplicaMatriz(const double m[4][4]){
 	double v[4] = { x, y, z, 1.0 };
 	double r[4] = { 0, 0, 0, 0 };

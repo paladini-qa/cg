@@ -55,116 +55,149 @@ static void desenhaDDA(TCanvas *canvas, int x1, int y1, int x2, int y2) {
 
 // --- Algoritmo de Bresenham (conforme slide Aula 2) ---
 static void desenhaBresenham(TCanvas *canvas, int x1, int y1, int x2, int y2) {
-	int deltax  = MABS(x2 - x1);
-	int deltay  = MABS(y2 - y1);
-	int signalx = SIGN(x2 - x1);
-	int signaly = SIGN(y2 - y1);
 	int x = x1;
 	int y = y1;
+	int sx = SIGN(x2 - x1);
+	int sy = SIGN(y2 - y1);
+	float DeltaX = (float)MABS(x2 - x1);
+	float DeltaY = (float)MABS(y2 - y1);
+	bool troca = false;
 
-	if (signalx < 0) x -= 1;
-	if (signaly < 0) y -= 1;
-
-	bool interchange = false;
-	if (deltay > deltax) {
-		int tmp = deltax;
-		deltax  = deltay;
-		deltay  = tmp;
-		interchange = true;
+	if (DeltaY > DeltaX) {
+		float tmp = DeltaX;
+		DeltaX = DeltaY;
+		DeltaY = tmp;
+		troca = true;
 	}
 
-	int erro = 2 * deltay - deltax;
-
-	for (int i = 0; i < deltax; i++) {
+	if (DeltaX == 0) {
 		canvas->Pixels[x][y] = canvas->Pen->Color;
-		while (erro >= 0) {
-			if (interchange)
-				x = x + signalx;
-			else
-				y = y + signaly;
-			erro = erro - 2 * deltax;
+		return;
+	}
+
+	float e = DeltaY / DeltaX - 0.5f;
+	for (int i = 1; i <= DeltaX; i++) {
+		canvas->Pixels[x][y] = canvas->Pen->Color;
+		if (e > 0) {
+			if (troca) x += sx; else y += sy;
+			e--;
 		}
-		if (interchange)
-			y = y + signaly;
-		else
-			x = x + signalx;
-		erro = erro + 2 * deltay;
+		if (troca) y += sy; else x += sx;
+		e += DeltaY / DeltaX;
 	}
+	// pixel final
+	canvas->Pixels[x2][y2] = canvas->Pen->Color;
 }
 
+// --- Auxiliares para matrizes homogeneas 3x3 (vetor linha [x y 1] * M) ---
+static void mult3(const double a[3][3], const double b[3][3], double r[3][3]) {
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++) {
+			r[i][j] = 0;
+			for (int k = 0; k < 3; k++)
+				r[i][j] += a[i][k] * b[k][j];
+		}
+}
+
+static void aplicaMatriz2D(Ponto &p, const double m[3][3]) {
+	double nx = p.x * m[0][0] + p.y * m[1][0] + m[2][0];
+	double ny = p.x * m[0][1] + p.y * m[1][1] + m[2][1];
+	p.x = nx;
+	p.y = ny;
+}
+
+// Translacao (matricial)
+//           | 1  0  0 |
+// [x y 1] * | 0  1  0 |
+//           | dx dy 1 |
 void Poligono::translada(double dx, double dy) {
-	for (int i = 0; i < (int)pontos.size(); i++) {
-		pontos[i].x += dx;
-		pontos[i].y += dy;
-	}
+	double T[3][3] = {
+		{  1,  0, 0 },
+		{  0,  1, 0 },
+		{ dx, dy, 1 } };
+
+	for (int i = 0; i < (int)pontos.size(); i++)
+		aplicaMatriz2D(pontos[i], T);
 }
 
+// Rotacao simples (matricial): em torno da origem, sem ponto central
+//           |  cos  sen  0 |
+// [x y 1] * | -sen  cos  0 |
+//           |   0    0   1 |
 void Poligono::rotaciona(double angulo) {
-	if (pontos.empty()) return;
-
-	const double PI = 3.14159265358979323846;
-	double rad  = angulo * PI / 180.0;
-	double cosA = cos(rad);
-	double sinA = sin(rad);
-
-	// 1) Calcula o centroide do polígono
-	double cx = 0.0, cy = 0.0;
-	int n = (int)pontos.size();
-	for (int i = 0; i < n; i++) {
-		cx += pontos[i].x;
-		cy += pontos[i].y;
-	}
-	cx /= n;
-	cy /= n;
-
-	for (int i = 0; i < n; i++) {
-		double dx = pontos[i].x - cx;
-		double dy = pontos[i].y - cy;
-		pontos[i].x = dx * cosA - dy * sinA + cx;
-		pontos[i].y = dx * sinA + dy * cosA + cy;
-	}
-}
-
-// Rotação homogênea em torno do ponto pivô (px, py)
-// Equivale a: T(-px,-py) · R(?) · T(px,py)
-// x' = (x-px)*cos(?) - (y-py)*sin(?) + px
-// y' = (x-px)*sin(?) + (y-py)*cos(?) + py
-void Poligono::rotacionaHomogenea(double angulo, double px, double py) {
 	const double PI = 3.14159265358979323846;
 	double rad = angulo * PI / 180.0;
-	double cosA = cos(rad);
-	double sinA = sin(rad);
-	for (int i = 0; i < (int)pontos.size(); i++) {
-		double dx = pontos[i].x - px;
-		double dy = pontos[i].y - py;
-		pontos[i].x = dx * cosA - dy * sinA + px;
-		pontos[i].y = dx * sinA + dy * cosA + py;
-	}
+	double c = cos(rad);
+	double s = sin(rad);
+	double R[3][3] = {
+		{  c,  s, 0 },
+		{ -s,  c, 0 },
+		{  0,  0, 1 } };
+
+	for (int i = 0; i < (int)pontos.size(); i++)
+		aplicaMatriz2D(pontos[i], R);
 }
 
+// Rotacao homogenea (matricial): em torno do ponto central
+// M = T(-px,-py) * R * T(px,py)
+void Poligono::rotacionaHomogenea(double angulo, const PontoCentral &centro) {
+	const double PI = 3.14159265358979323846;
+	double rad = angulo * PI / 180.0;
+	double c = cos(rad);
+	double s = sin(rad);
+	double px = centro.x;
+	double py = centro.y;
+
+	double T1[3][3] = {
+		{   1,   0, 0 },
+		{   0,   1, 0 },
+		{ -px, -py, 1 } };
+	double R[3][3] = {
+		{  c,  s, 0 },
+		{ -s,  c, 0 },
+		{  0,  0, 1 } };
+	double T2[3][3] = {
+		{  1,  0, 0 },
+		{  0,  1, 0 },
+		{ px, py, 1 } };
+
+	double tmp[3][3], M[3][3];
+	mult3(T1, R, tmp);
+	mult3(tmp, T2, M);
+
+	for (int i = 0; i < (int)pontos.size(); i++)
+		aplicaMatriz2D(pontos[i], M);
+}
+
+// Reflexao (matricial): vetor linha [x y 1] * M
+// 0 = Eixo X: diag(1,-1,1)   1 = Eixo Y: diag(-1,1,1)
+// 2 = Origem: diag(-1,-1,1)  3 = Reta y=x: troca x e y
 void Poligono::reflete(int eixo) {
-	for (int i = 0; i < (int)pontos.size(); i++) {
-		double x = pontos[i].x;
-		double y = pontos[i].y;
-		switch (eixo) {
-			case 0: // Eixo X  (y ? -y)
-				pontos[i].y = -y;
-				break;
-			case 1: // Eixo Y  (x ? -x)
-				pontos[i].x = -x;
-				break;
-			case 2: // Origem  (x ? -x, y ? -y)
-				pontos[i].x = -x;
-				pontos[i].y = -y;
-				break;
-			case 3: // Reta y=x  (troca x e y)
-				pontos[i].x = y;
-				pontos[i].y = x;
-				break;
-		}
-	}
-}
+	double M[3][3] = {
+		{ 1, 0, 0 },
+		{ 0, 1, 0 },
+		{ 0, 0, 1 } };
 
+	switch (eixo) {
+		case 0: // Eixo X  (y -> -y)
+			M[1][1] = -1;
+			break;
+		case 1: // Eixo Y  (x -> -x)
+			M[0][0] = -1;
+			break;
+		case 2: // Origem  (x -> -x, y -> -y)
+			M[0][0] = -1;
+			M[1][1] = -1;
+			break;
+		case 3: // Reta y=x  (troca x e y)
+			M[0][0] = 0; M[0][1] = 1;
+			M[1][0] = 1; M[1][1] = 0;
+			break;
+	}
+
+	for (int i = 0; i < (int)pontos.size(); i++)
+		aplicaMatriz2D(pontos[i], M);
+}
 void Poligono::desenha(TCanvas *canvas, Janela vp, Janela mundo, int tipoReta, bool useClipping, Janela janelaCorte) {
 	if (!useClipping) {
 		// Comportamento original: MoveTo no primeiro ponto, LineTo nos demais

@@ -250,7 +250,8 @@ void __fastcall TForm1::BtnAplicarClick(TObject *Sender)
             double angulo = StrToFloatDef(Edit3->Text, 0.0);
             double px     = StrToFloatDef(EditPx->Text, 0.0);
             double py     = StrToFloatDef(EditPy->Text, 0.0);
-            aplicarRotacaoHomogenea(display, idx, angulo, px, py);
+            PontoCentral centro(px, py);
+            aplicarRotacaoHomogenea(display, idx, angulo, centro);
             break;
         }
         case 3: { // Refletir

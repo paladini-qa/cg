@@ -16,7 +16,7 @@ void aplicarTransladar(Display &display, int idx, double dx, double dy);
 
 void aplicarRotacionar(Display &display, int idx, double angulo);
 
-void aplicarRotacaoHomogenea(Display &display, int idx, double angulo, double px, double py);
+void aplicarRotacaoHomogenea(Display &display, int idx, double angulo, const PontoCentral &centro);
 
 void aplicarRefletir(Display &display, int idx, int eixo);
 

@@ -33,7 +33,7 @@ void aplicarTransladar(Display &display, int idx, double dx, double dy)
 }
 
 // ---------------------------------------------------------------------------
-// Rotacionar (origem)
+// Rotacionar (simples, matricial, em torno da origem)
 // ---------------------------------------------------------------------------
 void aplicarRotacionar(Display &display, int idx, double angulo)
 {
@@ -50,15 +50,15 @@ void aplicarRotacionar(Display &display, int idx, double angulo)
 // ---------------------------------------------------------------------------
 // Rotacao Homogenea (ponto arbitrario)
 // ---------------------------------------------------------------------------
-void aplicarRotacaoHomogenea(Display &display, int idx, double angulo, double px, double py)
+void aplicarRotacaoHomogenea(Display &display, int idx, double angulo, const PontoCentral &centro)
 {
     if (idx != -1) {
         if (display.poligonos[idx].tipo != 'E')
-            display.poligonos[idx].rotacionaHomogenea(angulo, px, py);
+            display.poligonos[idx].rotacionaHomogenea(angulo, centro);
     } else {
         for (int i = 0; i < (int)display.poligonos.size(); i++)
             if (display.poligonos[i].tipo != 'E')
-                display.poligonos[i].rotacionaHomogenea(angulo, px, py);
+                display.poligonos[i].rotacionaHomogenea(angulo, centro);
     }
 }
 
@@ -169,7 +169,7 @@ void aplicarZoomOut(Display &display, Janela &mundo, std::stack<Janela> &histori
 }
 
 // ---------------------------------------------------------------------------
-// Curvas: Hermite (tipo=8) e Bezier (tipo=9)
+// Curvas: Hermite (tipo=8) e Bezier (tipo=9) - Implementação Matricial
 // ---------------------------------------------------------------------------
 bool aplicarCurva(Display &display, int idx, int tipo, int &contId)
 {
@@ -185,47 +185,65 @@ bool aplicarCurva(Display &display, int idx, int tipo, int &contId)
     int n = 100;
     double passo = 1.0 / n;
 
-    double ax, bx, cx, dx;
-    double ay, by, cy, dy;
+    double M[4][4];
+    double Gx[4], Gy[4];
 
     if (tipo == 8) {
-        double R1x = p2.x - p1.x;
-        double R1y = p2.y - p1.y;
-        double R4x = p4.x - p3.x;
-        double R4y = p4.y - p3.y;
+        double R1x = p2.x - p1.x; double R1y = p2.y - p1.y;
+        double R4x = p4.x - p3.x; double R4y = p4.y - p3.y;
 
-        ax = ( 2*p1.x) + (-2*p4.x) + R1x + R4x;
-        bx = (-3*p1.x) + ( 3*p4.x) + (-2*R1x) + (-R4x);
-        cx = R1x;
-        dx = p1.x;
+        double MH[4][4] = {
+            { 2, -2,  1,  1},
+            {-3,  3, -2, -1},
+            { 0,  0,  1,  0},
+            { 1,  0,  0,  0}
+        };
 
-        ay = ( 2*p1.y) + (-2*p4.y) + R1y + R4y;
-        by = (-3*p1.y) + ( 3*p4.y) + (-2*R1y) + (-R4y);
-        cy = R1y;
-        dy = p1.y;
-    } else {
-        ax = (-1*p1.x) + ( 3*p2.x) + (-3*p3.x) + ( 1*p4.x);
-        bx = ( 3*p1.x) + (-6*p2.x) + ( 3*p3.x);
-        cx = (-3*p1.x) + ( 3*p2.x);
-        dx =     p1.x;
+		for(int i=0; i<4; i++) for(int j=0; j<4; j++) M[i][j] = MH[i][j];
 
-        ay = (-1*p1.y) + ( 3*p2.y) + (-3*p3.y) + ( 1*p4.y);
-        by = ( 3*p1.y) + (-6*p2.y) + ( 3*p3.y);
-        cy = (-3*p1.y) + ( 3*p2.y);
-        dy =     p1.y;
+        Gx[0] = p1.x; Gx[1] = p4.x; Gx[2] = R1x; Gx[3] = R4x;
+        Gy[0] = p1.y; Gy[1] = p4.y; Gy[2] = R1y; Gy[3] = R4y;
+
+	} else {
+		double MB[4][4] = {
+            {-1,  3, -3,  1},
+            { 3, -6,  3,  0},
+            {-3,  3,  0,  0},
+            { 1,  0,  0,  0}
+        };
+
+		for(int i=0; i<4; i++) for(int j=0; j<4; j++) M[i][j] = MB[i][j];
+
+        Gx[0] = p1.x; Gx[1] = p2.x; Gx[2] = p3.x; Gx[3] = p4.x;
+        Gy[0] = p1.y; Gy[1] = p2.y; Gy[2] = p3.y; Gy[3] = p4.y;
+    }
+
+	//C = M * G
+    double Cx[4] = {0, 0, 0, 0};
+    double Cy[4] = {0, 0, 0, 0};
+
+    for(int i = 0; i < 4; i++) {
+        for(int j = 0; j < 4; j++) {
+            Cx[i] += M[i][j] * Gx[j];
+            Cy[i] += M[i][j] * Gy[j];
+        }
     }
 
     Poligono curva;
     curva.id   = contId++;
     curva.tipo = 'C';
 
-    for (double t = 0; t <= 1.0; t += passo) {
-        double t3 = t * t * t;
-        double t2 = t * t;
-        double t1 = t;
+	// (x,y) = T * C
+	for (double t = 0; t <= 1.0; t += passo) {
+        double T[4] = { t*t*t, t*t, t, 1.0 };
 
-        double x = (ax * t3) + (bx * t2) + (cx * t1) + dx;
-        double y = (ay * t3) + (by * t2) + (cy * t1) + dy;
+        double x = 0;
+        double y = 0;
+
+        for(int i = 0; i < 4; i++) {
+            x += T[i] * Cx[i];
+            y += T[i] * Cy[i];
+        }
 
         curva.pontos.push_back(Ponto(x, y));
     }
